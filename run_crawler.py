@@ -1,4 +1,4 @@
-from zhihu import *
+from Crawler import *
 import datetime
 ##start_question_url="http://www.zhihu.com/question/23831121"
 
