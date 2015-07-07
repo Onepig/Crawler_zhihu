@@ -1201,9 +1201,9 @@ def question_titles_in_page(topic_url,page_num,name):
     soup=BeautifulSoup(resp.content)
     questions_list=soup.find('div',class_="zu-top-feed-list").find_all('a', class_='question_link')
 
-    if os.path.exists('./questions_in_page(%d)_of_topic(%s)'%(page_num,name)):
-        os.remove('./questions_in_page(%d)_of_topic(%s)'%(page_num,name))
-    f=open('./questions_in_page(%d)_of_topic(%s)'%(page_num,name), 'a')
+    if os.path.exists('./topic_questions/questions_in_page(%d)_of_topic(%s)'%(page_num,name)):
+        os.remove('./topic_questions/questions_in_page(%d)_of_topic(%s)'%(page_num,name))
+    f=open('./topic_questions/questions_in_page(%d)_of_topic(%s)'%(page_num,name), 'a')
     for question in questions_list:
         question_url="http://www.zhihu.com"+question["href"]
         f.write(Question(question_url).get_title())

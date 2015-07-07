@@ -23,7 +23,7 @@ from zhihu import *
 ##for answer in answers:
 ##    print answer.to_txt()
 
-'''
+
 topic_url="http://www.zhihu.com/topic/19550547"
 
 
@@ -42,11 +42,15 @@ childrentopics=topic.get_childrenTopic()
 for child_topic in childrentopics:
     print child_topic.get_name()
 
-#questions=topic.get_all_questions()
+topic.get_all_questions_multiprocessing()
 
-#for question in questions:
-#   print question.get_title()
 '''
+questions=topic.get_all_questions()
+
+for question in questions:
+   print question.get_title()
+'''
+
 '''
 print topic.get_followers_num()
 
@@ -54,9 +58,11 @@ followers=topic.get_all_topic_followers()
 for follower in followers:
     print follower.get_user_id()
 '''
+
+'''
 user_url="http://www.zhihu.com/people/bo-cai-28-7"
 user=User(user_url)
 for follower in user.get_followers():
-	print follower.get_user_id()
-
+    print follower.get_user_id()
+'''
 
