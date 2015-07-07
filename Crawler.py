@@ -1182,6 +1182,7 @@ class Topic:
 
         p=Pool()
         for i in range(int(total_pages_nums)):
+            print "page:%d"%(i+1)
             p.apply_async(question_titles_in_page, args=(self.topic_url, i,self.name,))
         p.close()
         p.join()
@@ -1206,7 +1207,7 @@ def question_titles_in_page(topic_url,page_num,name):
     f=open('./topic_questions/questions_in_page(%d)_of_topic(%s).txt'%(page_num,name), 'a')
     for question in questions_list:
         question_url="http://www.zhihu.com"+question["href"]
-        f.write(Question(question_url).get_title())
-        f.write('\n')
+        f.write(Question(question_url).get_title().decode('utf-8').encode('gbk'))
+        f.write('\n'.decode('utf-8').encode('gbk'))
     f.close()
     print "Page %d has been downloaded..."%page_num
