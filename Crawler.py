@@ -1189,7 +1189,7 @@ class Topic:
 
 
 def question_titles_in_page(topic_url,page_num,name):
-    print "Page %d is downloading..."%page_num
+    # print "Page %d is downloading..."%page_num
     global session
 
     if session is None:
@@ -1208,3 +1208,4 @@ def question_titles_in_page(topic_url,page_num,name):
         question_url="http://www.zhihu.com"+question["href"]
         f.write(Question(question_url).get_title())
     f.close()
+    print "Page %d has been downloaded..."%page_num
