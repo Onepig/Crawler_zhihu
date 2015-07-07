@@ -8,6 +8,8 @@ import platform
 import requests
 import html2text
 import ConfigParser
+import multiprocessing
+from multiprocessing import Pool
 from bs4 import BeautifulSoup
 
 session = None
@@ -1162,3 +1164,47 @@ class Topic:
                     follower_soup = BeautifulSoup(follower_list[j])
                     user_link = follower_soup.find("h2", class_ = "zm-list-content-title").a
                     yield User(user_link["href"], user_link.string.encode("utf-8"))
+
+    def get_all_questions_multiprocessing(self):
+        global session
+
+        if session is None:
+            create_session()
+        s = session
+        if self.name is None:
+            self.name = self.get_name()
+
+
+        all_questions_urls=self.topic_url+"/questions"
+        resp=s.get(all_questions_urls)
+        soup=BeautifulSoup(resp.content)
+        total_pages_nums = soup.find('div', class_="zm-invite-pager").find_all('a')[-2].string.encode('utf-8').strip()
+
+        p=Pool()
+        for i in range(int(total_pages_nums)):
+            p.apply_async(question_titles_in_page, args=(i,))
+        p.close()
+        p.join()
+        print "Questions of topic(%s) had been downloaded"%(self.name)
+
+
+def question_titles_in_page(topic_url,page_num,name):
+    print "Page %d is downloading..."%page_num
+    global session
+
+    if session is None:
+        create_session()
+    s = session
+
+    single_page_url=topic_url+"/questions?page=%d"%(page_num) # the url of questions in page (i+1)
+    resp=s.get(single_page_url)
+    soup=BeautifulSoup(resp.content)
+    questions_list=soup.find('div',class_="zu-top-feed-list").find_all('a', class_='question_link')
+
+    if os.path.exists('./questions_in_page(%d)_of_topic(%s)'%(page_num,name)):
+        os.remove('./questions_in_page(%d)_of_topic(%s)'%(page_num,name))
+    f=open('./questions_in_page(%d)_of_topic(%s)'%(page_num,name), 'a')
+    for question in questions_list:
+        question_url="http://www.zhihu.com"+question["href"]
+        f.write(Question(question_url).get_title())
+    f.close()
