@@ -1207,5 +1207,6 @@ def question_titles_in_page(topic_url,page_num,name):
     for question in questions_list:
         question_url="http://www.zhihu.com"+question["href"]
         f.write(Question(question_url).get_title())
+        f.write('\n')
     f.close()
     print "Page %d has been downloaded..."%page_num
