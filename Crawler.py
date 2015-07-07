@@ -1182,7 +1182,7 @@ class Topic:
 
         p=Pool()
         for i in range(int(total_pages_nums)):
-            p.apply_async(question_titles_in_page, args=(i,))
+            p.apply_async(question_titles_in_page, args=(self.topic_url, i,self.name,))
         p.close()
         p.join()
         print "Questions of topic(%s) had been downloaded"%(self.name)
