@@ -1,5 +1,5 @@
 from zhihu import *
-
+import datetime
 ##start_question_url="http://www.zhihu.com/question/23831121"
 
 ##question=Question(start_question_url)
@@ -23,7 +23,7 @@ from zhihu import *
 ##for answer in answers:
 ##    print answer.to_txt()
 
-
+start=datetime.datetime.now()
 topic_url="http://www.zhihu.com/topic/19550547"
 
 
@@ -43,6 +43,8 @@ for child_topic in childrentopics:
     print child_topic.get_name()
 
 topic.get_all_questions_multiprocessing()
+end=datetime.datetime.now()
+print r"The total time is %s\n"%(end-start)
 
 '''
 questions=topic.get_all_questions()
