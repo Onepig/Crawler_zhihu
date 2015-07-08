@@ -1174,7 +1174,6 @@ class Topic:
         if self.name is None:
             self.name = self.get_name()
 
-
         all_questions_urls=self.topic_url+"/questions"
         resp=s.get(all_questions_urls)
         soup=BeautifulSoup(resp.content)
@@ -1209,33 +1208,32 @@ class Topic:
             os.makedirs('./topic_questions')
 
         p=Pool()
-        lock=multiprocessing.Lock()
         for i in range(int(total_pages_nums)):
             print "page:%d"%(i+1)
             single_page_url=self.topic_url+"/questions?page=%d"%(i+1)
-            p.apply_async(self.question_titles_in_page, args=(lock,single_page_url,filename,(i+1)))
+            p.apply_async(question_titles_in_page, args=(single_page_url,filename,(i+1)))
         p.close()
         p.join()
         print "Questions of topic(%s) had been downloaded"%self.name
 
-    def question_titles_in_page(self,lock,topic_url,filename,page_num):
-        # print "Page %d is downloading..."%page_num
-        lock.acquire()
-        global session
+def question_titles_in_page(topic_url,filename,page_num):
+    # print "Page %d is downloading..."%page_num
+    global session
+    if session is None:
+        create_session()
+    s = session
+    r=s.get(topic_url)
+    soup=BeautifulSoup(r.content)
 
-        if session is None:
-            create_session()
-        s = session
-        resp=s.get(topic_url)
-        soup=BeautifulSoup(resp.content)
-        try:
-            questions_list=soup.find('div',class_="zu-top-feed-list").find_all('a', class_='question_link')
-            f=open(filename, 'a')
-            for question in questions_list:
-                question_url="http://www.zhihu.com"+question["href"]
-                f.write(Question(question_url).get_title().decode('utf-8').encode('gbk'))
-                f.write('\n'.decode('utf-8').encode('gbk'))
-            f.close()
-            print "Page %d has been downloaded..."%page_num
-        finally:
-            lock.release()
+    questions_list=soup.find('div',class_="zu-top-feed-list").find_all('a', class_='question_link')
+    f=open(filename, 'a')
+    for question in questions_list:
+        question_url="http://www.zhihu.com"+question["href"]
+        question=Question(question_url)
+        title=question.get_title()
+        answers_num=question.get_answers_num()
+        followers_num=question.get_followers_num()
+        topics=question.get_topics()
+
+        f.write((title+'\t'+answers_num+'\t'+followers_num+'\t'+str(topics)+'\n').decode('utf-8').encode('gbk'))
+    print "Page %d has been downloaded..."%page_num

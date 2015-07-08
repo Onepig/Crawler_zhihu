@@ -42,7 +42,7 @@ childrentopics=topic.get_childrenTopic()
 for child_topic in childrentopics:
     print child_topic.get_name()
 
-topic.get_all_questions_multiprocessing()
+topic.get_all_questions_multiprocessing2()
 end=datetime.datetime.now()
 print r"The total time is %s\n"%(end-start)
 
