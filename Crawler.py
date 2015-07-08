@@ -1216,9 +1216,9 @@ class Topic:
             p.apply_async(self.question_titles_in_page, args=(lock,single_page_url,filename,(i+1)))
         p.close()
         p.join()
-        print "Questions of topic(%s) had been downloaded"%(self.name)
+        print "Questions of topic(%s) had been downloaded"%self.name
 
-    def question_titles_in_page(lock,topic_url,filename,page_num):
+    def question_titles_in_page(self,lock,topic_url,filename,page_num):
         # print "Page %d is downloading..."%page_num
         lock.acquire()
         global session
