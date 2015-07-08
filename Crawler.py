@@ -1188,26 +1188,54 @@ class Topic:
         p.join()
         print "Questions of topic(%s) had been downloaded"%(self.name)
 
+    def get_all_questions_multiprocessing2(self):
+        global session
 
-def question_titles_in_page(topic_url,page_num,name):
-    # print "Page %d is downloading..."%page_num
-    global session
+        if session is None:
+            create_session()
+        s = session
+        if self.name is None:
+            self.name = self.get_name()
 
-    if session is None:
-        create_session()
-    s = session
+        all_questions_urls=self.topic_url+"/questions"
+        resp=s.get(all_questions_urls)
+        soup=BeautifulSoup(resp.content)
+        total_pages_nums = soup.find('div', class_="zm-invite-pager").find_all('a')[-2].string.encode('utf-8').strip()
+        filename='./topic_questions/questions_of_topic(%s).txt'%(self.name)
+        if os.path.exists('./topic_questions'):
+            if os.path.exists(filename):
+                os.remove(filename)
+        else:
+            os.makedirs('./topic_questions')
 
-    single_page_url=topic_url+"/questions?page=%d"%(page_num) # the url of questions in page (i+1)
-    resp=s.get(single_page_url)
-    soup=BeautifulSoup(resp.content)
-    questions_list=soup.find('div',class_="zu-top-feed-list").find_all('a', class_='question_link')
+        p=Pool()
+        lock=multiprocessing.Lock()
+        for i in range(int(total_pages_nums)):
+            print "page:%d"%(i+1)
+            single_page_url=self.topic_url+"/questions?page=%d"%(i+1)
+            p.apply_async(self.question_titles_in_page, args=(lock,single_page_url,filename,(i+1)))
+        p.close()
+        p.join()
+        print "Questions of topic(%s) had been downloaded"%(self.name)
 
-    if os.path.exists('./topic_questions/questions_in_page(%d)_of_topic(%s).txt'%(page_num,name)):
-        os.remove('./topic_questions/questions_in_page(%d)_of_topic(%s).txt'%(page_num,name))
-    f=open('./topic_questions/questions_in_page(%d)_of_topic(%s).txt'%(page_num,name), 'a')
-    for question in questions_list:
-        question_url="http://www.zhihu.com"+question["href"]
-        f.write(Question(question_url).get_title().decode('utf-8').encode('gbk'))
-        f.write('\n'.decode('utf-8').encode('gbk'))
-    f.close()
-    print "Page %d has been downloaded..."%page_num
+    def question_titles_in_page(lock,topic_url,filename,page_num):
+        # print "Page %d is downloading..."%page_num
+        lock.acquire()
+        global session
+
+        if session is None:
+            create_session()
+        s = session
+        resp=s.get(topic_url)
+        soup=BeautifulSoup(resp.content)
+        try:
+            questions_list=soup.find('div',class_="zu-top-feed-list").find_all('a', class_='question_link')
+            f=open(filename, 'a')
+            for question in questions_list:
+                question_url="http://www.zhihu.com"+question["href"]
+                f.write(Question(question_url).get_title().decode('utf-8').encode('gbk'))
+                f.write('\n'.decode('utf-8').encode('gbk'))
+            f.close()
+            print "Page %d has been downloaded..."%page_num
+        finally:
+            lock.release()
