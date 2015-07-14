@@ -24,7 +24,7 @@ import datetime
 ##    print answer.to_txt()
 
 start=datetime.datetime.now()
-topic_url="http://www.zhihu.com/topic/19550547"
+topic_url="http://www.zhihu.com/topic/19552430"
 
 
 topic=Topic(topic_url)

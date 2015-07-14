@@ -14,14 +14,17 @@ from bs4 import BeautifulSoup
 
 session = None
 
-def create_session():# 模拟登陆
-
+def create_session():
     global session
-
+    global cookies
     cf = ConfigParser.ConfigParser()
     cf.read("config.ini")
+    cookies = cf._sections['cookies']
+
     email = cf.get("info", "email")
     password = cf.get("info", "password")
+    cookies = dict(cookies)
+
     s = requests.session()
     login_data = {"email": email, "password": password}
     header = {
@@ -30,18 +33,27 @@ def create_session():# 模拟登陆
         'Referer': "http://www.zhihu.com/",
         'X-Requested-With': "XMLHttpRequest"
     }
-    r = s.post('http://www.zhihu.com/login', data = login_data, headers = header)
-    if r.json()["r"] == 1:
-        raise Exception("login failed.")
-    session = s
 
+    r = s.post('http://www.zhihu.com/login/email', data=login_data, headers=header)
+    if r.json()["r"] == 1:
+        print "Login Failed, reason is:"
+        for m in r.json()["data"]:
+            print r.json()["data"][m]
+        print "Use cookies"
+        has_cookies = False
+        for key in cookies:
+            if key != '__name__' and cookies[key] != '':
+                has_cookies = True
+                break
+        if has_cookies == False:
+            raise ValueError("请填写config.ini文件中的cookies项.")
+    session = s
 
 class Question:
 
     url = None
     soup = None
     # session = None
-
 
     def __init__(self, url, title = None):
         if url[0:len(url) - 8] != "http://www.zhihu.com/question/":
@@ -109,7 +121,7 @@ class Question:
             print 'get_answers_num parser'
             self.parser()
         soup = self.soup
-        print type(soup)
+        #print type(soup)
         answers_num = 0
         if soup.find("h3", id = "zh-question-answer-num") != None:
             answers_num = int(soup.find("h3", id = "zh-question-answer-num")["data-num"])
@@ -1209,7 +1221,7 @@ class Topic:
 
         p=Pool()
         for i in range(int(total_pages_nums)):
-            print "page:%d"%(i+1)
+            #print "page:%d"%(i+1)
             single_page_url=self.topic_url+"/questions?page=%d"%(i+1)
             p.apply_async(question_titles_in_page, args=(single_page_url,filename,(i+1)))
         p.close()
@@ -1225,15 +1237,31 @@ def question_titles_in_page(topic_url,filename,page_num):
     r=s.get(topic_url)
     soup=BeautifulSoup(r.content)
 
-    questions_list=soup.find('div',class_="zu-top-feed-list").find_all('a', class_='question_link')
-    f=open(filename, 'a')
-    for question in questions_list:
-        question_url="http://www.zhihu.com"+question["href"]
-        question=Question(question_url)
-        title=question.get_title()
-        answers_num=question.get_answers_num()
-        followers_num=question.get_followers_num()
-        topics=question.get_topics()
-
-        f.write((title+'\t'+answers_num+'\t'+followers_num+'\t'+str(topics)+'\n').decode('utf-8').encode('gbk'))
-    print "Page %d has been downloaded..."%page_num
+    try:
+        questions_list=soup.find('div',class_="zu-top-feed-list").find_all('a', class_='question_link')
+        f=open(filename, 'a')
+        for question in questions_list:
+            question_url="http://www.zhihu.com"+question["href"]
+            question=Question(question_url)
+            title=question.get_title()
+            if title is not None:
+                # print title
+                answers_num=question.get_answers_num()
+                followers_num=question.get_followers_num()
+                topics=question.get_topics()
+                #print topics[0]
+                f.write(title.decode('utf-8').encode('gbk')+'\t'.decode('utf-8').encode('gbk'))
+                        #print type(answers_num)
+                f.write(str(answers_num).decode('utf-8').encode('gbk')+'\t'.decode('utf-8').encode('gbk'))
+                #print followers_num
+                f.write(str(followers_num).decode('utf-8').encode('gbk')+'\t'.decode('utf-8').encode('gbk'))
+                for i in range(len(topics)-1):
+                    f.write(str(topics[i]).decode('utf-8').encode('gbk')+'\t'.decode('utf-8').encode('gbk'))
+                    f.write(str(topics[-1]).decode('utf-8').encode('gbk'))
+                f.write('\n'.decode('utf-8').encode('gbk'))
+                #print "finish"
+    except Exception,e:
+        raise
+    finally:
+        f.close()
+        print "Page %d has been downloaded..."%page_num
